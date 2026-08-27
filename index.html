@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CardKit — Generator, Cleaner & BIN Tools</title>
+<style>
+/* ============ DESIGN TOKENS ============ */
+:root{
+  --bg:#F2F2F7; --card:#FFFFFF; --text:#141417; --text2:#8E8E93;
+  --input:#F2F2F7; --sep:rgba(60,60,67,.12);
+  --accent:#007AFF; --green:#34C759; --red:#FF3B30; --amber:#FF9500;
+  --shadow:0 2px 12px rgba(0,0,0,.06);
+  --seg:#E7E7EC; --segOn:#FFFFFF;
+}
+body.dark{
+  --bg:#000; --card:#1C1C1E; --text:#F2F2F7; --text2:#8E8E93;
+  --input:#2C2C2E; --sep:rgba(84,84,88,.5);
+  --shadow:0 0 0 1px rgba(255,255,255,.04);
+  --seg:rgba(118,118,128,.24); --segOn:#636366;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  font-size:15px;line-height:1.45;transition:background .25s,color .25s}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+button{font:inherit;color:inherit;border:none;background:none;cursor:pointer}
+input,textarea,select{font:inherit;color:var(--text)}
+.app{max-width:480px;margin:0 auto;padding:14px 16px 40px}
+
+header{display:flex;align-items:center;justify-content:space-between;padding:6px 2px 14px}
+.appName{display:flex;align-items:center;gap:10px}
+.appIcon{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#0A84FF,#0067D5);
+  display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:var(--shadow)}
+.appName b{font-size:18px;font-weight:700;display:block;line-height:1.15}
+.appName span{font-size:12px;color:var(--text2)}
+.iconBtn{width:38px;height:38px;border-radius:12px;background:var(--card);box-shadow:var(--shadow);
+  display:flex;align-items:center;justify-content:center;color:var(--text);transition:transform .2s}
+.iconBtn:active{transform:scale(.94)}
+
+.seg{display:flex;background:var(--seg);border-radius:12px;padding:2px;margin-bottom:16px}
+.seg button{flex:1;padding:8px 2px;border-radius:10px;font-size:12.5px;font-weight:600;color:var(--text2);
+  transition:all .2s;white-space:nowrap}
+.seg button.on{background:var(--segOn);color:var(--text);box-shadow:0 1px 5px rgba(0,0,0,.12)}
+.seg button:active{transform:scale(.98)}
+
+.card{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:16px;margin-bottom:14px}
+.card h3{margin:0 0 12px;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2)}
+.row{display:flex;gap:8px;align-items:center}
+.row.wrap{flex-wrap:wrap}
+.spacer{flex:1}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:10px 14px;border-radius:12px;font-size:14px;font-weight:600;
+  background:var(--input);color:var(--text);transition:transform .2s,opacity .2s;user-select:none}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:var(--accent);color:#fff}
+.btn.green{background:var(--green);color:#fff}
+.btn.danger{background:rgba(255,59,48,.12);color:var(--red)}
+.btn.big{width:100%;padding:13px;font-size:16px}
+.btn.small{padding:7px 10px;font-size:12.5px;border-radius:10px}
+.btn:disabled{opacity:.45;pointer-events:none}
+.ic{width:16px;height:16px;flex:none}
+.ic.big{width:20px;height:20px}
+
+.field{background:var(--input);border-radius:12px;padding:10px 12px;width:100%;border:1.5px solid transparent;
+  outline:none;transition:border-color .2s;font-size:15px}
+.field:focus{border-color:var(--accent)}
+textarea.field{resize:vertical;min-height:96px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.6}
+select.field{appearance:none;-webkit-appearance:none;padding-right:30px;
+  background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8"><path d="M1 1.5 6 6.5 11 1.5" fill="none" stroke="%238E8E93" stroke-width="1.8" stroke-linecap="round"/></svg>');
+  background-repeat:no-repeat;background-position:right 12px center}
+label.lbl{display:block;font-size:12.5px;font-weight:600;color:var(--text2);margin:12px 0 6px}
+.hint{font-size:12.5px;color:var(--text2);margin-top:6px;min-height:16px}
+.hint.warn{color:var(--amber)}
+
+.swRow{display:flex;align-items:center;justify-content:space-between;padding:9px 0;gap:10px}
+.swRow .t{font-size:14px;font-weight:500}
+.swRow .d{font-size:12px;color:var(--text2)}
+.sw{position:relative;width:51px;height:31px;flex:none}
+.sw input{opacity:0;width:0;height:0;position:absolute}
+.sw .knob{position:absolute;inset:0;background:rgba(120,120,128,.3);border-radius:16px;transition:background .2s;cursor:pointer}
+.sw .knob:after{content:"";position:absolute;width:27px;height:27px;border-radius:50%;background:#fff;top:2px;left:2px;
+  box-shadow:0 2px 5px rgba(0,0,0,.2);transition:left .2s}
+.sw input:checked + .knob{background:var(--green)}
+.sw input:checked + .knob:after{left:22px}
+
+.subseg{display:flex;background:var(--input);border-radius:10px;padding:2px;margin-bottom:12px}
+.subseg button{flex:1;padding:6px 4px;border-radius:8px;font-size:12px;font-weight:600;color:var(--text2);transition:all .2s}
+.subseg button.on{background:var(--card);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.1)}
+
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:20px;background:var(--card);
+  box-shadow:var(--shadow);font-size:13px;font-weight:600;white-space:nowrap;transition:transform .2s,background .2s,color .2s;color:var(--text)}
+.chip:active{transform:scale(.96)}
+.chip.on{color:#fff}
+
+.pv{border-radius:18px;padding:18px;color:#fff;min-height:210px;display:flex;flex-direction:column;
+  box-shadow:0 8px 24px rgba(0,0,0,.18);transition:background .3s;margin-bottom:14px;position:relative;overflow:hidden}
+.pvTop{display:flex;justify-content:space-between;align-items:flex-start}
+.pvChipRow{display:flex;align-items:center;gap:10px;margin:18px 0 14px}
+.pvNum{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:17.5px;letter-spacing:1.5px;margin-bottom:auto}
+.pvBottom{display:flex;justify-content:space-between;font-size:12.5px;opacity:.92;margin-top:14px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.pvBrandName{font-size:11px;letter-spacing:1.4px;font-weight:700;opacity:.85;text-transform:uppercase}
+
+.output{background:var(--input);border-radius:12px;padding:12px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:12px;line-height:1.7;white-space:pre-wrap;word-break:break-all;min-height:90px;max-height:240px;overflow:auto}
+.empty{display:flex;flex-direction:column;align-items:center;gap:8px;padding:26px 10px;color:var(--text2);font-size:13.5px}
+.stats{font-size:13px;color:var(--text2);margin:10px 2px}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:8px;letter-spacing:.3px;flex:none}
+.badge svg{width:11px;height:11px}
+.badge.g{background:rgba(52,199,89,.15);color:#248A3D}
+.badge.r{background:rgba(255,59,48,.14);color:var(--red)}
+.badge.a{background:rgba(255,149,0,.16);color:#C93400}
+.badge.b{background:rgba(0,122,255,.13);color:var(--accent)}
+body.dark .badge.g{color:#30D158}body.dark .badge.a{color:#FF9F0A}body.dark .badge.b{color:#0A84FF}
+
+.resLine{display:flex;align-items:center;gap:8px;padding:9px 4px;border-bottom:.5px solid var(--sep);font-size:11.5px}
+.resLine:last-child{border-bottom:none}
+.resLine .txt{flex:1;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;word-break:break-all}
+.brandMini{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:600;color:var(--text2);flex:none}
+
+details.grp{border-bottom:.5px solid var(--sep)}
+details.grp summary{padding:11px 4px;font-weight:600;font-size:14px;cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px}
+details.grp summary::-webkit-details-marker{display:none}
+details.grp summary .ic{transition:transform .2s;color:var(--text2)}
+details.grp[open] summary .ic{transform:rotate(90deg)}
+.count{margin-left:auto;font-size:12px;color:var(--text2);font-weight:500}
+
+footer{text-align:center;color:var(--text2);font-size:12px;padding:8px 0 4px}
+footer .lock{display:inline-flex;align-items:center;gap:5px}
+footer .ic{width:12px;height:12px}
+
+#toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);opacity:0;
+  background:#1C1C1E;color:#fff;padding:10px 16px;border-radius:14px;font-size:13.5px;font-weight:500;
+  display:flex;align-items:center;gap:7px;box-shadow:0 6px 20px rgba(0,0,0,.3);transition:all .25s;pointer-events:none;z-index:90;max-width:88vw}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast .ic{color:var(--green)}
+
+.modalWrap{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:flex-end;justify-content:center;z-index:60;padding:16px}
+.modalWrap.open{display:flex}
+.modal{background:var(--card);border-radius:20px;width:100%;max-width:440px;max-height:82vh;overflow:auto;padding:18px;animation:pop .22s ease}
+@keyframes pop{from{transform:translateY(16px);opacity:.4}to{transform:none;opacity:1}}
+.modal h2{margin:0 0 4px;font-size:17px}
+.modal .sub{font-size:12.5px;color:var(--text2);margin-bottom:12px}
+.histItem{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:.5px solid var(--sep)}
+.histItem .meta{flex:1;min-width:0}
+.histItem .meta b{font-size:13.5px;display:block}
+.histItem .meta span{font-size:11.5px;color:var(--text2)}
+
+#lock{position:fixed;inset:0;background:var(--bg);z-index:100;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px}
+#lock.open{display:flex}
+#lock .appIcon{width:56px;height:56px;border-radius:16px}
+#lockPin{width:170px;text-align:center;font-size:22px;letter-spacing:10px;padding:12px}
+#lock.shake #lockPin{animation:shake .35s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+
+.panel{display:none}
+.panel.on{display:block;animation:fade .18s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.divider{height:.5px;background:var(--sep);margin:10px 0}
+.hiddenFile{display:none}
+.qrBox{display:flex;justify-content:center;background:#fff;border-radius:16px;padding:16px;margin:12px 0}
+</style>
+</head>
+<body>
+
+<!-- ============ SVG ICON LIBRARY ============ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-card" viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M2.5 9.5h19M6 14.5h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5 15H4.5A1.5 1.5 0 0 1 3 13.5v-9A1.5 1.5 0 0 1 4.5 3h9A1.5 1.5 0 0 1 15 4.5V5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v11m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 14V3m0 0 4 4m-4-4L8 7M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9.5 7V5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2M6.5 7l1 12.2A2 2 0 0 0 9.5 21h5a2 2 0 0 0 2-1.8l1-12.2M10 11v6m4-6v6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-qr" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M13.5 13.5h3v3h-3zM20.5 13.5v3m-3.5 4h7m-7 0v-1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-unlock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 10.5V8a4 4 0 0 1 7.7-1.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.5V12l3 2.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.5v2.2m0 14.6v2.2M2.5 12h2.2m14.6 0h2.2M5 5l1.6 1.6M17.4 17.4 19 19M19 5l-1.6 1.6M6.6 17.4 5 19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m15.5 15.5 5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M4 12h15m0 0-5.5-5.5M19 12l-5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m4.5 12.5 5 5 10-11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M14 3v5h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 3.5V8h-4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-sort" viewBox="0 0 24 24"><path d="M8 4v16m0 0-3.5-3.5M8 20l3.5-3.5M16 20V4m0 0-3.5 3.5M16 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M3 7h3.5c5.5 0 8 10 13.5 10M3 17h3.5c1.9 0 3.4-1.2 4.7-2.8M20 7c-2.3 0-4.1 1.6-5.6 3.5M17 4l3 3-3 3m0 7 3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 12h17M12 3.5c2.5 2.3 3.8 5.2 3.8 8.5s-1.3 6.2-3.8 8.5c-2.5-2.3-3.8-5.2-3.8-8.5s1.3-6.2 3.8-8.5Z" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4 2.8 19.5h18.4L12 4Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 10v4.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="16.8" r=".6" fill="currentColor" stroke="currentColor"/></symbol>
+    <symbol id="i-check-c" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m8.3 12.3 2.6 2.6 4.8-5.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-x-c" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m9 9 6 6m0-6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-wave" viewBox="0 0 24 24"><path d="M6 9.5a8 8 0 0 1 0 5M9.5 7.5a11 11 0 0 1 0 9M13 5.5a14.5 14.5 0 0 1 0 13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+
+<!-- LOCK OVERLAY -->
+<div id="lock">
+  <div class="appIcon"><svg class="ic big" style="width:26px;height:26px"><use href="#i-card" xlink:href="#i-card"></use></svg></div>
+  <b style="font-size:17px">CardKit is locked</b>
+  <span style="color:var(--text2);font-size:13px">Enter your 4-digit passcode</span>
+  <input id="lockPin" class="field mono" inputmode="numeric" maxlength="4" placeholder="0000" autocomplete="off">
+</div>
+
+<div class="app">
+  <header>
+    <div class="appName">
+      <div class="appIcon"><svg class="ic big"><use href="#i-card" xlink:href="#i-card"></use></svg></div>
+      <div><b>CardKit</b><span>Generator · Cleaner · BIN Tools</span></div>
+    </div>
+    <button class="iconBtn" id="themeBtn" title="Toggle theme">
+      <svg class="ic big" id="themeIco"><use href="#i-moon" xlink:href="#i-moon"></use></svg>
+    </button>
+  </header>
+
+  <nav class="seg" id="navSeg">
+    <button data-tab="generator" class="on">Generator</button>
+    <button data-tab="cleaner">Cleaner</button>
+    <button data-tab="bins">BIN Tools</button>
+    <button data-tab="validator">Validator</button>
+  </nav>
+
+  <!-- ============ GENERATOR ============ -->
+  <section class="panel on" id="panel-generator">
+    <div class="chips" id="brandChips"></div>
+
+    <div class="pv" id="pv">
+      <div class="pvTop"><span id="pvLogo"></span><span id="pvWaves" style="opacity:.9"></span></div>
+      <div class="pvChipRow" id="pvChip"></div>
+      <div class="pvNum" id="pvNum">•••• •••• •••• ••••</div>
+      <div class="pvBottom">
+        <span><span style="opacity:.7;font-size:10px">VALID THRU</span><br><span id="pvExp">MM/YY</span></span>
+        <span style="text-align:right"><span style="opacity:.7;font-size:10px" id="pvCvvLbl">CVV</span><br><span id="pvCvv">•••</span></span>
+      </div>
+      <div class="pvBrandName" id="pvName" style="position:absolute;right:18px;top:52px"></div>
+    </div>
+
+    <div class="card">
+      <h3>BIN source</h3>
+      <div class="subseg" id="genTabs">
+        <button data-gt="A" class="on">Single BIN</button>
+        <button data-gt="B">BIN list</button>
+        <button data-gt="C">From BIN Tools</button>
+      </div>
+      <div id="gtA">
+        <input id="binInput" class="field mono" inputmode="numeric" maxlength="8" placeholder="BIN — 5 to 7 digits (optional)">
+        <div class="hint" id="binHint">Leave empty to use the selected brand's random prefix</div>
+      </div>
+      <div id="gtB" style="display:none">
+        <textarea id="binListText" class="field" placeholder="One BIN per line&#10;447227&#10;554544&#10;371449"></textarea>
+        <div class="row" style="margin-top:8px">
+          <button class="btn small" id="binFileBtn"><svg class="ic"><use href="#i-upload" xlink:href="#i-upload"></use></svg>Upload .txt / .csv</button>
+          <input type="file" id="binFile" class="hiddenFile" accept=".txt,.csv">
+        </div>
+        <div class="row" style="margin-top:10px;gap:6px">
+          <label class="chip" style="cursor:pointer"><input type="radio" name="binMode" value="per" checked style="accent-color:#007AFF"> N cards per BIN</label>
+          <label class="chip" style="cursor:pointer"><input type="radio" name="binMode" value="spread" style="accent-color:#007AFF"> N total, spread</label>
+        </div>
+      </div>
+      <div id="gtC" style="display:none">
+        <button class="btn" id="loadBinsBtn" style="width:100%"><svg class="ic"><use href="#i-download" xlink:href="#i-download"></use></svg>Load extracted BINs from BIN Tools</button>
+        <div class="hint" id="loadedInfo">No BINs loaded yet</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Options</h3>
+      <div class="row" style="gap:10px">
+        <div style="flex:1"><label class="lbl" style="margin-top:0">Count (1–100000)</label>
+          <input id="genCount" class="field mono" type="number" min="1" max="100000" value="10"></div>
+        <div style="flex:1"><label class="lbl" style="margin-top:0">Expiry from</label>
+          <input id="genYearFrom" class="field mono" type="number" value="2025"></div>
+        <div style="flex:1"><label class="lbl" style="margin-top:0">To</label>
+          <input id="genYearTo" class="field mono" type="number" value="2028"></div>
+      </div>
+      <div class="swRow"><div><div class="t">Lock same expiry for whole batch</div></div>
+        <label class="sw"><input type="checkbox" id="lockExp"><span class="knob"></span></label></div>
+      <div class="swRow"><div><div class="t">Fake name prefix</div><div class="d">NAME|number|mm|yyyy|cvv</div></div>
+        <label class="sw"><input type="checkbox" id="fakeName"><span class="knob"></span></label></div>
+      <label class="lbl">Output format</label>
+      <select id="genFormat" class="field">
+        <option value="pipe" selected>number|mm|yyyy|cvv</option>
+        <option value="comma">number,mm,yyyy,cvv</option>
+        <option value="colon">number:mm:yyyy:cvv</option>
+        <option value="csv">CSV with headers</option>
+        <option value="spaced">spaced number (4472 2722 0457 1439|02|2029|601)</option>
+        <option value="custom">Custom template</option>
+      </select>
+      <div id="tplWrap" style="display:none">
+        <label class="lbl">Template — placeholders: {num} {mm} {yyyy} {cvv}</label>
+        <input id="genTemplate" class="field mono" value="{num}|{mm}|{yyyy}|{cvv}">
+      </div>
+      <label class="lbl">Seed (optional — same seed, same batch)</label>
+      <input id="genSeed" class="field mono" placeholder="e.g. demo-42">
+    </div>
+
+    <button class="btn primary big" id="genBtn"><svg class="ic big"><use href="#i-shuffle" xlink:href="#i-shuffle"></use></svg>Generate cards</button>
+    <div class="stats" id="genCounter">No cards yet</div>
+
+    <div class="card">
+      <h3>Output</h3>
+      <div class="output mono" id="genOutput"><span class="empty"><svg class="ic big" style="color:var(--text2)"><use href="#i-card" xlink:href="#i-card"></use></svg>No cards yet — press Generate</span></div>
+      <div class="row wrap" style="margin-top:12px">
+        <button class="btn small" id="actCopy"><svg class="ic"><use href="#i-copy" xlink:href="#i-copy"></use></svg>Copy</button>
+        <button class="btn small" id="actTxt"><svg class="ic"><use href="#i-download" xlink:href="#i-download"></use></svg>.txt</button>
+        <button class="btn small" id="actCsv"><svg class="ic"><use href="#i-download" xlink:href="#i-download"></use></svg>.csv</button>
+        <button class="btn small" id="actJson"><svg class="ic"><use href="#i-download" xlink:href="#i-download"></use></svg>.json</button>
+        <button class="btn small" id="actQr"><svg class="ic"><use href="#i-qr" xlink:href="#i-qr"></use></svg>QR</button>
+        <span class="spacer"></span>
+        <button class="btn small" id="actHistory"><svg class="ic"><use href="#i-clock" xlink:href="#i-clock"></use></svg>History</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CLEANER ============ -->
+  <section class="panel" id="panel-cleaner">
+    <div class="card">
+      <h3>Input</h3>
+      <textarea id="cleanInput" class="field" style="min-height:120px" placeholder="Paste messy card text…&#10;4472270045714391|02|2029|601&#10;Jsbsj 4147203735305175|01|2031|250 j"></textarea>
+      <div class="row" style="margin-top:10px">
+        <button class="btn small" id="cleanFileBtn"><svg class="ic"><use href="#i-upload" xlink:href="#i-upload"></use></svg>Upload .txt / .log / .csv</button>
+        <input type="file" id="cleanFile" class="hiddenFile" accept=".txt,.log,.csv">
+        <span class="spacer"></span>
+        <button class="btn small danger" id="cleanClear"><svg class="ic"><use href="#i-trash" xlink:href="#i-trash"></use></svg>Clear</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Cleaning options</h3>
+      <div class="swRow"><div><div class="t">OCR character fix</div><div class="d">l→1, O→0, I→1, S→5, o→0, Z→2 inside digit runs</div></div>
+        <label class="sw"><input type="checkbox" id="optOcr" checked><span class="knob"></span></label></div>
+      <div class="swRow"><div><div class="t">Merge duplicates</div><div class="d">Same number on 2 lines → merged complete line</div></div>
+        <label class="sw"><input type="checkbox" id="optMerge" checked><span class="knob"></span></label></div>
+      <div class="swRow"><div><div class="t">Auto-fix Luhn</div><div class="d">Fix last digit and mark FIXED; off = skip invalid</div></div>
+        <label class="sw"><input type="checkbox" id="optFix" checked><span class="knob"></span></label></div>
+      <div class="swRow"><div><div class="t">Skip known test numbers</div><div class="d">4111…, 4242…, 5555… etc.</div></div>
+        <label class="sw"><input type="checkbox" id="optSkip" checked><span class="knob"></span></label></div>
+      <div class="swRow"><div><div class="t">Dedupe</div><div class="d">Remove exact duplicate lines</div></div>
+        <label class="sw"><input type="checkbox" id="optDedupe" checked><span class="knob"></span></label></div>
+      <label class="lbl">Output fields</label>
+      <div class="row wrap" style="gap:6px">
+        <span class="chip" style="opacity:.65"><svg class="ic" style="color:var(--accent)"><use href="#i-check" xlink:href="#i-check"></use></svg>Number</span>
+        <label class="chip" style="cursor:pointer"><input type="checkbox" id="fExp" checked style="accent-color:#007AFF"> + Expiry</label>
+        <label class="chip" style="cursor:pointer"><input type="checkbox" id="fCvv" checked style="accent-color:#007AFF"> + CVV</label>
+      </div>
+      <label class="lbl">Sort</label>
+      <select id="optSort" class="field">
+        <option value="none" selected>No sorting</option>
+        <option value="number">By number</option>
+        <option value="expiry">By expiry</option>
+      </select>
+    </div>
+
+    <button class="btn green big" id="cleanBtn"><svg class="ic big"><use href="#i-refresh" xlink:href="#i-refresh"></use></svg>Clean cards</button>
+    <div class="stats" id="cleanStats">Paste text above, then press Clean</div>
+
+    <div class="card">
+      <h3>Results</h3>
+      <div id="cleanResults"><div class="empty"><svg class="ic big"><use href="#i-search" xlink:href="#i-search"></use></svg>No cards yet</div></div>
+      <div class="row wrap" style="margin-top:12px">
+        <button class="btn small" id="clCopy"><svg class="ic"><use href="#i-copy" xlink:href="#i-copy"></use></svg>Copy</button>
+        <button class="btn small" id="clTxt"><svg class="ic"><use href="#i-download" xlink:href="#i-download"></use></svg>.txt</button>
+        <button class="btn small" id="clJson"><svg class="ic"><use href="#i-download" xlink:href="#i-download"></use></svg>.json</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ BIN TOOLS ============ -->
+  <section class="panel" id="panel-bins">
+    <div class="card">
+      <h3>BIN extractor</h3>
+      <textarea id="btInput" class="field" placeholder="Paste cards (any format)…&#10;4472270045714391|02|2029|601&#10;5545441234567891"></textarea>
+      <div class="row" style="margin-top:10px">
+        <button class="btn small" id="btFileBtn"><svg class="ic"><use href="#i-upload" xlink:href="#i-upload"></use></svg>Upload .txt / .csv</button>
+        <input type="file" id="btFile" class="hiddenFile" accept=".txt,.csv">
+        <span class="spacer"></span>
+        <button class="btn small primary" id="btExtract"><svg class="ic"><use href="#i-search" xlink:href="#i-search"></use></svg>Extract BINs</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Filters</h3>
+      <div class="row" style="gap:8px">
+        <div style="flex:1"><label class="lbl" style="margin-top:0">Sort</label>
+          <select id="btSort" class="field">
+            <option value="asc">Ascending</option><option value="desc">Descending</option>
+            <option value="country">By country (A–Z)</option><option value="network">By network</option>
+          </select></div>
+        <div style="flex:1"><label class="lbl" style="margin-top:0">Country</label>
+          <select id="btCountry" class="field"><option>All</option></select></div>
+      </div>
+      <div class="swRow"><div><div class="t">Group by country</div></div>
+        <label class="sw"><input type="checkbox" id="btGroup"><span class="knob"></span></label></div>
+    </div>
+    <div class="stats" id="btCount">No BINs extracted yet</div>
+    <div class="card">
+      <h3>BINs</h3>
+      <div id="btList"><div class="empty"><svg class="ic big"><use href="#i-globe" xlink:href="#i-globe"></use></svg>No BINs yet</div></div>
+      <div class="row wrap" style="margin-top:12px">
+        <button class="btn small" id="btCopy"><svg class="ic"><use href="#i-copy" xlink:href="#i-copy"></use></svg>Copy</button>
+        <button class="btn small" id="btTxt"><svg class="ic"><use href="#i-download" xlink:href="#i-download"></use></svg>.txt</button>
+        <button class="btn small" id="btCsv"><svg class="ic"><use href="#i-download" xlink:href="#i-download"></use></svg>.csv</button>
+        <button class="btn small primary" id="btSend"><svg class="ic"><use href="#i-send" xlink:href="#i-send"></use></svg>Send to Generator</button>
+      </div>
+      <div class="hint" style="margin-top:10px">BIN_DB is a demo dataset — replace with a full IIN list for production.</div>
+    </div>
+  </section>
+
+  <!-- ============ VALIDATOR ============ -->
+  <section class="panel" id="panel-validator">
+    <div class="card">
+      <h3>Card validator</h3>
+      <input id="valInput" class="field mono" inputmode="numeric" placeholder="Card number — press Enter">
+      <div id="valResult" style="margin-top:12px"></div>
+    </div>
+    <div class="card">
+      <h3>BIN lookup</h3>
+      <input id="valBin" class="field mono" inputmode="numeric" maxlength="8" placeholder="First 6 digits — press Enter">
+      <div id="binResult" style="margin-top:12px"></div>
+    </div>
+  </section>
+
+  <footer>
+    <span class="lock"><svg class="ic"><use href="#i-lock" xlink:href="#i-lock"></use></svg>All data stays in your browser</span><br>
+    <span>Synthetic test data tool — generated numbers are not real payment cards</span>
+  </footer>
+</div>
+
+<!-- MODALS -->
+<div class="modalWrap" id="qrModal"><div class="modal" style="text-align:center">
+  <h2>QR export</h2><div class="sub" id="qrCap"></div>
+  <div class="qrBox" id="qrBox"></div>
+  <button class="btn big" id="qrClose"><svg class="ic"><use href="#i-close" xlink:href="#i-close"></use></svg>Close</button>
+</div></div>
+
+<div class="modalWrap" id="histModal"><div class="modal">
+  <h2>Batch history</h2><div class="sub">Last 10 batches, stored locally (very large batches keep metadata only)</div>
+  <div id="histList"></div>
+  <div class="row wrap" style="margin-top:12px">
+    <button class="btn small danger" id="histClear"><svg class="ic"><use href="#i-trash" xlink:href="#i-trash"></use></svg>Clear all</button>
+    <span class="spacer"></span>
+    <button class="btn small" id="histClose"><svg class="ic"><use href="#i-close" xlink:href="#i-close"></use></svg>Close</button>
+  </div>
+  <div class="divider"></div>
+  <h3 style="font-size:13px;color:var(--text2);margin:0 0 8px;font-weight:600">PASSCODE</h3>
+  <div class="row">
+    <input id="passInput" class="field mono" inputmode="numeric" maxlength="4" placeholder="4-digit passcode" style="flex:1">
+    <button class="btn small primary" id="passSet"><svg class="ic"><use href="#i-lock" xlink:href="#i-lock"></use></svg>Set</button>
+    <button class="btn small danger" id="passRemove"><svg class="ic"><use href="#i-unlock" xlink:href="#i-unlock"></use></svg>Remove</button>
+  </div>
+  <div class="hint">When set, the app locks automatically if the tab loses focus.</div>
+</div></div>
+
+<div id="toast"></div>
+
+<script>
+"use strict";
+/* ================= PURE HELPERS ================= */
+function $(id){return document.getElementById(id);}
+function repAll(s,find,repl){return s.split(find).join(repl);}
+function fmtNum(n){try{return n.toLocaleString("en-US");}catch(e){return String(n);}}
+
+/* mulberry32 — seeded PRNG (same seed → same batch) */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function hashSeed(str){var h=1779033703^str.length;for(var i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19;}return h>>>0;}
+
+/* luhnCheck — full number passes the Luhn checksum? */
+function luhnCheck(num){var s=0,dbl=false;for(var i=num.length-1;i>=0;i--){var d=+num[i];if(dbl){d*=2;if(d>9)d-=9;}s+=d;dbl=!dbl;}return s%10===0;}
+/* luhnDigit — check digit to append (double every SECOND digit from the right of the partial) */
+function luhnDigit(num){var s=0;for(var i=0;i<num.length;i++){var d=+num[num.length-1-i];if(i%2===0){d*=2;if(d>9)d-=9;}s+=d;}return (10-(s%10))%10;}
+/* fixLuhn — recompute the final check digit of a broken number */
+function fixLuhn(num){return num.slice(0,-1)+luhnDigit(num.slice(0,-1));}
+
+/* generateCardNumber — prefix + random filler + Luhn check digit (ALWAYS passes Luhn) */
+function generateCardNumber(prefix,len,rnd){var n=prefix;while(n.length<len-1){n+=Math.floor(rnd()*10);}return n+luhnDigit(n);}
+/* generateExpiry — month 01–12, year inside range, never in the past */
+function generateExpiry(rnd,yFrom,yTo){var now=new Date(),cy=now.getFullYear(),cm=now.getMonth()+1;
+  var from=Math.max(yFrom,cy),to=Math.max(yTo,from);
+  var year=from+Math.floor(rnd()*(to-from+1));
+  var mFrom=(year===cy)?cm:1;
+  return {mm:String(mFrom+Math.floor(rnd()*(12-mFrom+1))).padStart(2,"0"),yyyy:String(year)};}
+/* generateCvv — 3 digits (4 for Amex) */
+function generateCvv(cvvLen,rnd){var s="";for(var i=0;i<cvvLen;i++){s+=Math.floor(rnd()*10);}return s;}
+
+function copyToClipboard(text,label){
+  var done=function(){toast(label||"Copied");};
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(function(){fallbackCopy(text);done();});
+  }else{fallbackCopy(text);done();}}
+function fallbackCopy(text){var t=document.createElement("textarea");t.value=text;t.style.position="fixed";t.style.opacity="0";
+  document.body.appendChild(t);t.select();try{document.execCommand("copy");}catch(e){}t.remove();}
+function downloadFile(name,content,type){var a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([content],{type:type||"text/plain"}));a.download=name;
+  document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href);},4000);}
+function todayStamp(){var d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function toast(msg,ok){var t=$("toast");t.innerHTML="";
+  if(ok!==false){t.innerHTML='<svg class="ic"><use href="#i-check" xlink:href="#i-check"></use></svg>';}
+  var sp=document.createElement("span");sp.textContent=msg;t.appendChild(sp);
+  t.className="show";clearTimeout(t._h);t._h=setTimeout(function(){t.className="";},2200);}
+
+/* ================= BRAND_DATA — real IIN ranges ================= */
+var BRAND_DATA={
+  visa:      {label:"Visa",       len:16,cvv:3,prefixes:["4"],chip:"#1A1F71",grad:["#1A1F71","#3346B0"]},
+  mastercard:{label:"MasterCard", len:16,cvv:3,prefixes:[["51","55"],["2221","2720"]],chip:"#202024",grad:["#2C2C2E","#4A4A4E"]},
+  amex:      {label:"Amex",       len:15,cvv:4,prefixes:["34","37"],chip:"#2E77BC",grad:["#2E77BC","#1A4C85"]},
+  discover:  {label:"Discover",   len:16,cvv:3,prefixes:["6011",["622126","622925"],["644","649"],"65"],chip:"#E8590C",grad:["#FF7A1A","#E85200"]},
+  jcb:       {label:"JCB",        len:16,cvv:3,prefixes:[["3528","3589"]],chip:"#0B3B8C",grad:["#0B3B8C","#1660AE"]},
+  rupay:     {label:"RuPay",      len:16,cvv:3,prefixes:["60","65","81","82","508","353","356"],chip:"#0E7C46",grad:["#0B7C46","#0C4E8C"]},
+  maestro:   {label:"Maestro",    len:16,cvv:3,prefixes:["5018","5020","5038","5893","6304","6759","6761","6762","6763"],chip:"#202024",grad:["#0F4C81","#5B2D8E"]},
+  unionpay:  {label:"UnionPay",   len:16,cvv:3,prefixes:["62"],chip:"#B31F24",grad:["#B31F24","#20388F"]},
+  diners:    {label:"Diners",     len:14,cvv:3,prefixes:[["300","305"],"36","38","39"],chip:"#0079BE",grad:["#0079BE","#024E7E"]},
+  random:    {label:"Random",     chip:"#007AFF",grad:["#5AA2E8","#2A6DB8"]}
+};
+var UNKNOWN_META={label:"Unknown",chip:"#6D6D72",grad:["#6D6D72","#3A3A3C"],len:16,cvv:3};
+var BRAND_KEYS=["visa","mastercard","amex","discover","jcb","rupay","maestro","unionpay","diners"];
+
+function prefixMatches(rules,num){return rules.some(function(r){
+  if(typeof r==="string"){return num.indexOf(r)===0||r.indexOf(num)===0;}
+  var L=r[0].length,head=num.slice(0,L)||"0";
+  var lo2=parseInt(head+new Array(Math.max(0,L-head.length)+1).join("0")),
+      hi2=parseInt(head+new Array(Math.max(0,L-head.length)+1).join("9"));
+  return lo2<=parseInt(r[1])&&hi2>=parseInt(r[0]);});}
+/* detectBrand — ordered so specific ranges win over generic ones */
+function detectBrand(num){if(!num)return "random";
+  var order=["amex","diners","jcb","mastercard","maestro","unionpay","discover","rupay","visa"];
+  for(var i=0;i<order.length;i++){if(prefixMatches(BRAND_DATA[order[i]].prefixes,num))return order[i];}
+  return "unknown";}
+function randomPrefix(brand,rnd){var rules=BRAND_DATA[brand].prefixes;var r=rules[Math.floor(rnd()*rules.length)];
+  if(typeof r==="string")return r;
+  var lo=parseInt(r[0]),hi=parseInt(r[1]);
+  return String(lo+Math.floor(rnd()*(hi-lo+1))).padStart(r[0].length,"0");}
+function brandMeta(b){return BRAND_DATA[b]||UNKNOWN_META;}
+function groupNumber(num){if(detectBrand(num)==="amex")return num.slice(0,4)+" "+num.slice(4,10)+" "+num.slice(10);
+  return num.replace(/(.{4})/g,"$1 ").trim();}
+
+/* ================= BIN_DB — DEMO dataset (replace with full IIN list for production) ================= */
+var BIN_DB={
+  "436782":{brand:"visa",country:"India",bank:"Axis Bank"},
+  "447227":{brand:"visa",country:"India",bank:"SBI Card"},
+  "414720":{brand:"visa",country:"India",bank:"HDFC Bank"},
+  "524400":{brand:"mastercard",country:"India",bank:"ICICI Bank"},
+  "810024":{brand:"rupay",country:"India",bank:"Bank of India"},
+  "448590":{brand:"visa",country:"USA",bank:"Chase"},
+  "535316":{brand:"mastercard",country:"USA",bank:"Citibank"},
+  "601100":{brand:"discover",country:"USA",bank:"Discover Bank"},
+  "371449":{brand:"amex",country:"USA",bank:"American Express"},
+  "550000":{brand:"mastercard",country:"UK",bank:"Barclays"},
+  "453978":{brand:"visa",country:"UK",bank:"HSBC"},
+  "421424":{brand:"visa",country:"UAE",bank:"Emirates NBD"},
+  "543302":{brand:"mastercard",country:"UAE",bank:"Mashreq"},
+  "535346":{brand:"mastercard",country:"Canada",bank:"TD Bank"},
+  "477039":{brand:"visa",country:"Canada",bank:"RBC"},
+  "465025":{brand:"visa",country:"Australia",bank:"Commonwealth Bank"},
+  "456471":{brand:"visa",country:"Australia",bank:"Westpac"},
+  "541066":{brand:"mastercard",country:"Germany",bank:"Commerzbank"},
+  "402940":{brand:"visa",country:"Germany",bank:"DKB"},
+  "621099":{brand:"unionpay",country:"China",bank:"ICBC"},
+  "352800":{brand:"jcb",country:"Japan",bank:"JCB"},
+  "300000":{brand:"diners",country:"France",bank:"BNP Paribas"}
+};
+var PREFIX_FALLBACK=[["622126","discover"],["6011","discover"],["353","jcb"],["35","jcb"],["34","amex"],["37","amex"],
+  ["300","diners"],["36","diners"],["38","diners"],["39","diners"],["62","unionpay"],["65","discover"],["51","mastercard"],
+  ["55","mastercard"],["5","mastercard"],["4","visa"]];
+function binInfo(bin){
+  if(BIN_DB[bin]){var e=BIN_DB[bin];return{brand:e.brand,country:e.country,bank:e.bank,known:true};}
+  for(var i=0;i<PREFIX_FALLBACK.length;i++){if(bin.indexOf(PREFIX_FALLBACK[i][0])===0)
+    return{brand:PREFIX_FALLBACK[i][1],country:"Unknown",bank:"—",known:false};}
+  return{brand:"unknown",country:"Unknown",bank:"—",known:false};}
+
+/* ================= BRAND LOGOS (simplified inline SVG) ================= */
+function brandLogoSVG(brand,h,white){
+  h=h||18;var w=Math.round(h*1.5);
+  var font="font-family='-apple-system,Segoe UI,Roboto,sans-serif'";
+  function S(inner){return '<svg width="'+w+'" height="'+h+'" viewBox="0 0 48 32" aria-hidden="true">'+inner+'</svg>';}
+  switch(brand){
+    case "visa":return S('<rect width="48" height="32" rx="6" fill="#1A1F71"/><text x="24" y="21" text-anchor="middle" fill="#fff" font-size="12" font-weight="800" font-style="italic" '+font+'>VISA</text>');
+    case "mastercard":return S('<circle cx="18" cy="16" r="10" fill="#EB001B"/><circle cx="30" cy="16" r="10" fill="#F79E1B"/><path d="M24 7.9a10 10 0 0 1 0 16.2 10 10 0 0 1 0-16.2Z" fill="#FF5F00"/>');
+    case "amex":return S('<rect width="48" height="32" rx="6" fill="#2E77BC"/><text x="24" y="20.5" text-anchor="middle" fill="#fff" font-size="10.5" font-weight="800" '+font+'>AMEX</text>');
+    case "discover":return S('<rect width="48" height="32" rx="6" fill="#2B2B2E"/><circle cx="24" cy="16" r="11.5" fill="#FF6000"/><text x="24" y="19" text-anchor="middle" fill="#fff" font-size="7.5" font-weight="800" '+font+'>DISC</text>');
+    case "jcb":return S('<rect width="48" height="32" rx="6" fill="#0B3B8C"/><text x="24" y="21" text-anchor="middle" fill="#fff" font-size="12.5" font-weight="800" '+font+'>JCB</text>');
+    case "rupay":return S('<rect width="48" height="32" rx="6" fill="#0E7C46"/><text x="20" y="22" text-anchor="middle" fill="#fff" font-size="15" font-weight="800" font-style="italic" '+font+'>R</text><path d="M30 10l8 6-8 6V10Z" fill="#F47B20"/>');
+    case "maestro":return S('<circle cx="18" cy="16" r="10" fill="#0079C1"/><circle cx="30" cy="16" r="10" fill="#ED0A3F"/><path d="M24 7.9a10 10 0 0 1 0 16.2 10 10 0 0 1 0-16.2Z" fill="#7A4E9E"/>');
+    case "unionpay":return S('<rect width="48" height="32" rx="6" fill="#fff"/><g transform="skewX(-10)"><rect x="10" y="7" width="10" height="18" rx="2.5" fill="#E21836"/><rect x="21" y="7" width="10" height="18" rx="2.5" fill="#00447C"/><rect x="32" y="7" width="10" height="18" rx="2.5" fill="#007B84"/></g>');
+    case "diners":return S('<rect width="48" height="32" rx="6" fill="#0079BE"/><text x="24" y="19.5" text-anchor="middle" fill="#fff" font-size="7.5" font-weight="800" '+font+'>DINERS</text>');
+    case "random":return '<svg width="'+h+'" height="'+h+'" viewBox="0 0 24 24" style="color:'+(white?"#fff":"#007AFF")+'"><use href="#i-shuffle" xlink:href="#i-shuffle"></use></svg>';
+    default:return S('<rect width="48" height="32" rx="6" fill="#8E8E93"/><circle cx="24" cy="16" r="8" fill="none" stroke="#fff" stroke-width="2"/>');
+  }
+}
+function emvChipSVG(){return '<svg width="38" height="29" viewBox="0 0 38 29"><rect x=".5" y=".5" width="37" height="28" rx="5" fill="#E9CB80" stroke="#C6A44E"/><path d="M13 .5V10m12-9.5V10M13 19v9.5m12-9.5v9.5M.5 14.5H13m12 0h12.5M13 10h12v9H13z" fill="none" stroke="#C6A44E" stroke-width="1.4"/></svg>';}
+function contactlessSVG(){return '<svg width="20" height="20" viewBox="0 0 24 24" style="color:#fff"><use href="#i-wave" xlink:href="#i-wave"></use></svg>';}
+
+/* ================= SELF-CONTAINED QR ENCODER (byte mode, ECC L, v1–6) ================= */
+var QR=(function(){
+  var EXP=new Array(512),LOG=new Array(256);
+  (function(){var x=1;for(var i=0;i<255;i++){EXP[i]=x;LOG[x]=i;x<<=1;if(x&256)x^=0x11d;}
+    for(var j=255;j<512;j++)EXP[j]=EXP[j-255];})();
+  function mul(a,b){return (a&&b)?EXP[LOG[a]+LOG[b]]:0;}
+  function rsEcc(data,n){var gen=[1],i,j;
+    for(i=0;i<n;i++){var a=EXP[i],ng=new Array(gen.length+1).fill(0);
+      for(j=0;j<gen.length;j++){ng[j]^=gen[j];ng[j+1]^=mul(gen[j],a);}gen=ng;}
+    var res=new Array(n).fill(0);
+    for(i=0;i<data.length;i++){var f=data[i]^res.shift();res.push(0);
+      for(j=0;j<n;j++)res[j]^=mul(gen[j+1],f);}
+    return res;}
+  var CAP_L=[19,34,55,80,108,136],ECL=[7,10,15,20,26,18],NBL=[1,1,1,1,1,2];
+  var ALIGN=[[],[6,18],[6,22],[6,26],[6,30],[6,34]];
+  var FMT_L=[0x77C4,0x72F3,0x7DAA,0x789D,0x662F,0x6318,0x6C41,0x6976];
+  function encode(text){
+    var bytes=Array.prototype.slice.call(new TextEncoder().encode(text));
+    var v=-1;for(var vi=0;vi<CAP_L.length;vi++){if(CAP_L[vi]>=bytes.length+2){v=vi;break;}}
+    if(v===-1)return null;
+    var bits=[];function push(val,n){for(var i=n-1;i>=0;i--)bits.push((val>>i)&1);}
+    push(4,4);push(bytes.length,8);
+    for(var bi=0;bi<bytes.length;bi++)push(bytes[bi],8);
+    var capBits=CAP_L[v]*8;push(0,Math.min(4,capBits-bits.length));
+    while(bits.length%8)bits.push(0);
+    var pad=0xEC;while(bits.length<capBits){push(pad,8);pad=(pad===0xEC)?0x11:0xEC;}
+    var cw=[];for(var i=0;i<bits.length;i+=8){var b=0;for(var j=0;j<8;j++)b=(b<<1)|bits[i+j];cw.push(b);}
+    var nb=NBL[v],per=cw.length/nb,blocks=[],eccs=[];
+    for(b=0;b<nb;b++){var blk=cw.slice(b*per,b*per+per);blocks.push(blk);eccs.push(rsEcc(blk,ECL[v]));}
+    var fin=[];
+    for(i=0;i<per;i++)for(b=0;b<nb;b++)fin.push(blocks[b][i]);
+    for(i=0;i<ECL[v];i++)for(b=0;b<nb;b++)fin.push(eccs[b][i]);
+    var size=v*4+17;
+    var m=[],fn=[],r,c;
+    for(r=0;r<size;r++){m.push(new Array(size).fill(0));fn.push(new Array(size).fill(false));}
+    function set(rr,cc,val){m[rr][cc]=val?1:0;fn[rr][cc]=true;}
+    function finder(r0,c0){for(var dr=-4;dr<=4;dr++)for(var dc=-4;dc<=4;dc++){
+      var rr=r0+dr,cc=c0+dc;if(rr<0||rr>=size||cc<0||cc>=size)continue;
+      var d=Math.max(Math.abs(dr),Math.abs(dc));set(rr,cc,d!==2&&d!==4);}}
+    finder(3,3);finder(3,size-4);finder(size-4,3);
+    for(i=0;i<size;i++){if(!fn[6][i])set(6,i,i%2===0);if(!fn[i][6])set(i,6,i%2===0);}
+    if(v>=2){var P=ALIGN[v-1],last=P[P.length-1];
+      for(var pi=0;pi<P.length;pi++)for(var pj=0;pj<P.length;pj++){
+        var ar=P[pi],ac=P[pj];
+        if((ar===6&&ac===6)||(ar===6&&ac===last)||(ar===last&&ac===6))continue;
+        for(var dr2=-2;dr2<=2;dr2++)for(var dc2=-2;dc2<=2;dc2++)
+          set(ar+dr2,ac+dc2,Math.max(Math.abs(dr2),Math.abs(dc2))!==1);}}
+    for(i=0;i<9;i++){if(!fn[8][i])set(8,i,0);if(!fn[i][8])set(i,8,0);}
+    for(i=0;i<8;i++){if(!fn[8][size-1-i])set(8,size-1-i,0);if(!fn[size-1-i][8])set(size-1-i,8,0);}
+    var dataBits=[];
+    for(i=0;i<fin.length;i++)for(j=7;j>=0;j--)dataBits.push((fin[i]>>j)&1);
+    var idx=0;
+    for(var right=size-1;right>=1;right-=2){
+      if(right===6)right=5;
+      for(var vert=0;vert<size;vert++)for(j=0;j<2;j++){
+        c=right-j;var up=((right+1)&2)===0;r=up?size-1-vert:vert;
+        if(!fn[r][c]){var bit=(idx<dataBits.length)?dataBits[idx]:0;if((r+c)%2===0)bit^=1;m[r][c]=bit;idx++;}}}
+    var f=FMT_L[0];function gb(ii){return (f>>ii)&1;}
+    for(i=0;i<=5;i++)m[i][8]=gb(i);
+    m[7][8]=gb(6);m[8][8]=gb(7);m[8][7]=gb(8);
+    for(i=9;i<15;i++)m[8][14-i]=gb(i);
+    for(i=0;i<8;i++)m[8][size-1-i]=gb(i);
+    for(i=8;i<15;i++)m[size-15+i][8]=gb(i);
+    m[size-8][8]=1;
+    return m;}
+  function svg(text){var m=encode(text);if(!m)return null;
+    var q=4,s=m.length+q*2,rect="";
+    for(var r=0;r<m.length;r++)for(var c=0;c<m.length;c++)
+      if(m[r][c])rect+='<rect x="'+(c+q)+'" y="'+(r+q)+'" width="1" height="1"/>';
+    var px=Math.min(5,Math.floor(260/s));
+    return '<svg viewBox="0 0 '+s+' '+s+'" width="'+(s*px)+'" height="'+(s*px)+'" shape-rendering="crispEdges"><rect width="'+s+'" height="'+s+'" fill="#fff"/><g fill="#111">'+rect+'</g></svg>';}
+  return {svg:svg,maxChars:function(){return CAP_L[5]-2;}};
+})();
+
+/* ================= CLEANER PIPELINE ================= */
+var TEST_NUMBERS=["4111111111111111","4242424242424242","5555555555554444","5105105105105100",
+  "4012888888881881","378282246310005","6011111111111117","30569309025904","3530111333300000"];
+
+/* ocrFix — map look-alike letters to digits only inside runs already containing 6+ digits */
+function ocrFix(text){var map={l:"1",I:"1",i:"1",O:"0",o:"0",Z:"2",S:"5",s:"5",B:"8"};
+  return text.replace(/[A-Za-z0-9]+/g,function(t){
+    if((t.match(/\d/g)||[]).length<6)return t;
+    return t.replace(/[lOIioZSsB]/g,function(c){return map[c]||c;});});}
+
+/* findNumbers — scan one line for 13–19 digit numbers; card groups like "4472 2722 0457 1439" are normalized first */
+function findNumbers(line){
+  var norm=line.replace(/(\d{4})[ \-.](?=\d{4})/g,"$1");
+  var out=[],m,re=/\d{13,19}/g;
+  while((m=re.exec(norm))!==null){
+    var before=norm[m.index-1]||"",after=norm[m.index+m[0].length]||"";
+    if(/\d/.test(before)||/\d/.test(after))continue;
+    out.push({number:m[0],
+      after:norm.slice(m.index+m[0].length,m.index+m[0].length+40),
+      before:norm.slice(Math.max(0,m.index-40),m.index)});}
+  return out;}
+
+/* findMeta — expiry + cvv live in the ~40 chars around the number; never taken from the number itself */
+function findMeta(after,before,cvvLen){
+  var mm="",yyyy="",cvv="";
+  var expRe=/(?:^|[^0-9])(0[1-9]|1[0-2]|[1-9])[|\/\-.:\s](\d{4}|\d{2})(?!\d)/;
+  var src=after,em=expRe.exec(src);
+  if(!em){em=expRe.exec(before);if(em)src=before.slice(em.index);}
+  if(em){mm=em[1].padStart(2,"0");var y=em[2];yyyy=(y.length===4)?y:"20"+y;
+    if(+yyyy<2000||+yyyy>2099){mm="";yyyy="";}
+    else{var rest=src.slice(em.index+em[0].length);
+      var cm=/(?:^|[^0-9])(\d{3,4})(?!\d)/.exec(rest);
+      if(cm&&cm[1].length===cvvLen)cvv=cm[1];}}
+  var kw=/(?:cvv2?|cvc2?|cvd|cid|security|sec)\b[^0-9]{0,4}(\d{3,4})/i.exec(before+" "+after);
+  if(!cvv&&kw&&kw[1].length===cvvLen)cvv=kw[1];
+  return{mm:mm,yyyy:yyyy,cvv:cvv};}
+
+/* mergeDuplicates — same number across lines → one complete record */
+function mergeDuplicates(cards){var map={},order=[],merged=0;
+  for(var i=0;i<cards.length;i++){var c=cards[i],k=c.number;
+    if(map[k]){var t=map[k];t.mm=t.mm||c.mm;t.yyyy=t.yyyy||c.yyyy;t.cvv=t.cvv||c.cvv;merged++;}
+    else{map[k]={number:c.number,mm:c.mm,yyyy:c.yyyy,cvv:c.cvv,brand:c.brand,fixed:false};order.push(k);}}
+  var out=order.map(function(k){return map[k];});out.mergedCount=merged;return out;}
+
+/* extractCards — full cleaning pipeline */
+function extractCards(text,o){
+  var src=text.replace(/\r/g,"");
+  if(o.ocr)src=ocrFix(src);
+  var cards=[],lines=src.split("\n");
+  for(var li=0;li<lines.length;li++){
+    var found=findNumbers(lines[li]);
+    for(var fi=0;fi<found.length;fi++){
+      var f=found[fi],brand=detectBrand(f.number);
+      var cvvLen=(BRAND_DATA[brand]||UNKNOWN_META).cvv||3;
+      var meta=findMeta(f.after,f.before,cvvLen);
+      cards.push({number:f.number,mm:meta.mm,yyyy:meta.yyyy,cvv:meta.cvv,brand:brand,fixed:false,invalid:false});}}
+  if(o.skip)cards=cards.filter(function(c){return TEST_NUMBERS.indexOf(c.number)===-1;});
+  if(o.merge)cards=mergeDuplicates(cards);
+  var stats={found:cards.length,withExp:0,missingCvv:0,invalid:0,fixed:0,dupRemoved:0};
+  for(var i=0;i<cards.length;i++){var c=cards[i];
+    if(!luhnCheck(c.number)){
+      if(o.fix){c.number=fixLuhn(c.number);c.fixed=true;}else c.invalid=true;}}
+  /* QA FIX: merge again AFTER auto-fix, so a fixed number merges into an existing complete record */
+  if(o.merge)cards=mergeDuplicates(cards);
+  if(o.dedupe){var seen={};cards=cards.filter(function(c){
+    var k=c.number+c.mm+c.yyyy+c.cvv;
+    if(seen[k]){stats.dupRemoved++;return false;}seen[k]=1;return true;});}
+  for(i=0;i<cards.length;i++){var c2=cards[i];
+    c2.status=c2.invalid?"INVALID":(c2.fixed?"FIXED":(!c2.mm?"MISSING EXPIRY":"VALID"));
+    if(c2.mm)stats.withExp++;if(!c2.cvv)stats.missingCvv++;if(c2.invalid)stats.invalid++;if(c2.fixed)stats.fixed++;}
+  if(o.sort==="number")cards.sort(function(a,b){return a.number<b.number?-1:a.number>b.number?1:0;});
+  if(o.sort==="expiry")cards.sort(function(a,b){
+    var x=(a.yyyy+a.mm)||"999999",y=(b.yyyy+b.mm)||"999999";return x<y?-1:x>y?1:0;});
+  return{cards:cards,stats:stats};}
+
+/* extractBins — unique 6-digit BINs from any card text */
+function extractBins(text){var seen={},bins=[],total=0;
+  var lines=text.replace(/\r/g,"").split("\n");
+  for(var i=0;i<lines.length;i++){
+    var found=findNumbers(lines[i]);
+    for(var j=0;j<found.length;j++){var b=found[j].number.slice(0,6);
+      total++;if(!seen[b]){seen[b]=1;bins.push(b);}}}
+  return{bins:bins,dupRemoved:total-bins.length};}
+
+var NET_ORDER={visa:0,mastercard:1,amex:2,discover:3,diners:4,jcb:5,unionpay:6,rupay:7,maestro:8,unknown:9};
+function sortBins(bins,mode){var b=bins.slice();
+  if(mode==="asc")return b.sort();
+  if(mode==="desc")return b.sort().reverse();
+  if(mode==="country")return b.sort(function(x,y){
+    var a=binInfo(x).country,d=binInfo(y).country;return a<d?-1:a>d?1:(x<y?-1:x>y?1:0);});
+  return b.sort(function(x,y){
+    var a=NET_ORDER[binInfo(x).brand]||9,d=NET_ORDER[binInfo(y).brand]||9;return a-d||(x<y?-1:x>y?1:0);});}
+function filterByCountry(bins,c){if(c==="All")return bins;
+  return bins.filter(function(b){return binInfo(b).country===c;});}
+
+/* ================= STORAGE + THEME + TABS ================= */
+var store={
+  get:function(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}},
+  set:function(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
+
+function applyTheme(dark){document.body.classList.toggle("dark",dark);
+  $("themeIco").innerHTML='<use href="#i-'+(dark?"sun":"moon")+'" xlink:href="#i-'+(dark?"sun":"moon")+'"></use>';
+  store.set("ck_theme",dark?"dark":"light");}
+$("themeBtn").onclick=function(){applyTheme(!document.body.classList.contains("dark"));};
+applyTheme(store.get("ck_theme")==="dark");
+
+function switchTab(name){
+  var btns=document.querySelectorAll("#navSeg button");
+  for(var i=0;i<btns.length;i++)btns[i].classList.toggle("on",btns[i].getAttribute("data-tab")===name);
+  var panels=["generator","cleaner","bins","validator"];
+  for(var j=0;j<panels.length;j++)$("panel-"+panels[j]).classList.toggle("on",panels[j]===name);
+  store.set("ck_tab",name);}
+(function(){var btns=document.querySelectorAll("#navSeg button");
+  for(var i=0;i<btns.length;i++)(function(b){b.onclick=function(){switchTab(b.getAttribute("data-tab"));};})(btns[i]);})();
+switchTab(store.get("ck_tab","generator"));
+
+function openModal(id){$(id).classList.add("open");}
+function closeModal(id){$(id).classList.remove("open");}
+(function(){var wraps=document.querySelectorAll(".modalWrap");
+  for(var i=0;i<wraps.length;i++)(function(m){
+    m.addEventListener("click",function(e){if(e.target===m)m.classList.remove("open");});})(wraps[i]);})();
+
+/* ================= GENERATOR ================= */
+var MAX_CARDS=100000;   /* hard generation limit */
+var PREVIEW_LINES=300;  /* output box shows only the first N lines of huge batches */
+var SAVE_CHAR_LIMIT=250000; /* batches larger than this are not stored in localStorage */
+
+var GS={brand:"visa",subtab:"A",loadedBins:[],batch:null};
+var BT={bins:[]};
+var CLEAN=null;
+var FIRST=["Aarav","Emma","Liam","Olivia","Noah","Ava","Rohan","Sofia","Lucas","Mia","Ethan","Isla","Arjun","Zara","Mason","Lena","Kabir","Nina","Diego","Maya","Omar","Anya","Felix","Priya"];
+var LAST=["Sharma","Smith","Johnson","Patel","Brown","Garcia","Kim","Nguyen","Silva","Muller","Rossi","Khan","Lee","Novak","Costa","Dubois","Ivanov","Tanaka","Okafor","Berg","Ali","Fernandez","Weber","Nair"];
+
+function renderChips(){var box=$("brandChips");box.innerHTML="";
+  var all=BRAND_KEYS.concat(["random"]);
+  for(var i=0;i<all.length;i++){
+    var b=document.createElement("button");b.className="chip";b.setAttribute("data-brand",all[i]);
+    (function(k){b.onclick=function(){selectBrand(k,true);};})(all[i]);
+    box.appendChild(b);}
+  paintChips();}
+function paintChips(){var chips=document.querySelectorAll("#brandChips .chip");
+  for(var i=0;i<chips.length;i++){var c=chips[i],k=c.getAttribute("data-brand"),on=(k===GS.brand);
+    c.classList.toggle("on",on);
+    c.style.background=on?brandMeta(k).chip:"";
+    c.innerHTML=brandLogoSVG(k,16,on)+"<span>"+BRAND_DATA[k].label+"</span>";}}
+function selectBrand(k){GS.brand=k;paintChips();paintPreview(null);
+  if(k==="random")$("binHint").textContent="Random brand + random prefix for each card";
+  else if(!$("binInput").value.trim())$("binHint").textContent="BIN empty → random "+BRAND_DATA[k].label+" prefix";}
+
+$("binInput").addEventListener("input",function(){
+  this.value=this.value.replace(/\D/g,"").slice(0,8);
+  var v=this.value,hint=$("binHint");
+  if(!v){hint.className="hint";hint.textContent="Leave empty to use the selected brand's random prefix";return;}
+  if(v.length<5){hint.className="hint warn";hint.textContent="Enter 5–7 digits";return;}
+  var d=detectBrand(v);
+  if(d!=="unknown"&&d!==GS.brand){GS.brand=d;paintChips();paintPreview(null);
+    hint.className="hint warn";hint.textContent="Looks like "+BRAND_DATA[d].label+" — switched brand chip";}
+  else{hint.className="hint";
+    hint.textContent=(d==="unknown")?"Unknown network — using 16 digits / CVV3":BRAND_DATA[d].label+" detected";}});
+$("binInput").addEventListener("keydown",function(e){if(e.key==="Enter")runGenerate();});
+
+(function(){var btns=document.querySelectorAll("#genTabs button");
+  for(var i=0;i<btns.length;i++)(function(b){b.onclick=function(){
+    GS.subtab=b.getAttribute("data-gt");
+    for(var j=0;j<btns.length;j++)btns[j].classList.toggle("on",btns[j]===b);
+    $("gtA").style.display=(GS.subtab==="A")?"":"none";
+    $("gtB").style.display=(GS.subtab==="B")?"":"none";
+    $("gtC").style.display=(GS.subtab==="C")?"":"none";};})(btns[i]);})();
+
+$("binFileBtn").onclick=function(){$("binFile").click();};
+$("binFile").onchange=function(){var f=this.files[0];if(!f)return;
+  var r=new FileReader();r.onload=function(){$("binListText").value=r.result;toast("BIN list loaded");};
+  r.readAsText(f);this.value="";};
+$("loadBinsBtn").onclick=function(){
+  if(!BT.bins.length){toast("No BINs extracted yet — run BIN Tools first",false);return;}
+  GS.loadedBins=BT.bins.slice();
+  $("loadedInfo").textContent=GS.loadedBins.length+" BINs loaded from BIN Tools: "+
+    GS.loadedBins.slice(0,5).join(", ")+(GS.loadedBins.length>5?"…":"");
+  toast(GS.loadedBins.length+" BINs loaded");};
+$("genFormat").onchange=function(){$("tplWrap").style.display=(this.value==="custom")?"":"none";};
+
+function currentRnd(){var s=$("genSeed").value.trim();return s?mulberry32(hashSeed(s)):Math.random;}
+function parseBText(){return $("binListText").value.split(/\s+/)
+  .map(function(x){return x.replace(/\D/g,"");})
+  .filter(function(x){return x.length>=4&&x.length<=8;});}
+
+/* runGenerate — resolve prefixes (source A/B/C), build a unique Luhn-valid batch (up to 100,000 cards) */
+function runGenerate(){
+  var rnd=currentRnd(),prefixes;
+  if(GS.subtab==="A"){var bv=$("binInput").value.trim();prefixes=bv?[bv]:[null];}
+  else if(GS.subtab==="B"){var p=parseBText();prefixes=p.length?p:[null];}
+  else prefixes=GS.loadedBins.length?GS.loadedBins.slice():[null];
+
+  var count=Math.min(MAX_CARDS,Math.max(1,parseInt($("genCount").value,10)||10));
+  var yFrom=parseInt($("genYearFrom").value,10)||new Date().getFullYear();
+  var yTo=Math.max(yFrom,parseInt($("genYearTo").value,10)||yFrom+3);
+  var lock=$("lockExp").checked,fake=$("fakeName").checked;
+  var fmt=$("genFormat").value,tpl=$("genTemplate").value||"{num}|{mm}|{yyyy}|{cvv}";
+  var modeEl=document.querySelector('input[name="binMode"]:checked');
+  var mode=modeEl?modeEl.value:"per";
+
+  /* build the job list; total is hard-capped at MAX_CARDS */
+  var jobs=[],i,capped=false;
+  if(mode==="per"){
+    var perCount=count;
+    if(perCount*prefixes.length>MAX_CARDS){
+      perCount=Math.max(1,Math.floor(MAX_CARDS/prefixes.length));capped=true;}
+    for(var pi=0;pi<prefixes.length;pi++)for(i=0;i<perCount;i++)jobs.push(prefixes[pi]);
+  }else{
+    if(count>MAX_CARDS){count=MAX_CARDS;capped=true;}
+    for(i=0;i<count;i++)jobs.push(prefixes[i%prefixes.length]);
+  }
+
+  var lockedExp=lock?generateExpiry(rnd,yFrom,yTo):null;
+  var seen={},cards=[];
+  for(var ji=0;ji<jobs.length;ji++){
+    var prefix=jobs[ji],brand;
+    if(!prefix){ /* empty BIN → selected brand's random prefix */
+      brand=(GS.brand==="random")?BRAND_KEYS[Math.floor(rnd()*BRAND_KEYS.length)]:GS.brand;
+      prefix=randomPrefix(brand,rnd);}
+    else brand=detectBrand(prefix);
+    var info=(brand==="unknown")?UNKNOWN_META:BRAND_DATA[brand];
+    var num="",tries=0;
+    do{num=generateCardNumber(prefix,info.len,rnd);}while(seen[num]&&++tries<60);
+    if(seen[num])continue;
+    seen[num]=1;
+    var exp=lockedExp||generateExpiry(rnd,yFrom,yTo);
+    cards.push({number:num,mm:exp.mm,yyyy:exp.yyyy,cvv:generateCvv(info.cvv,rnd),brand:brand,
+      name:fake?(FIRST[Math.floor(rnd()*FIRST.length)]+" "+LAST[Math.floor(rnd()*LAST.length)]):""});}
+
+  if(!cards.length){toast("Could not generate cards — check the BIN source",false);return;}
+
+  function lineOf(c){var core;
+    if(fmt==="comma")core=c.number+","+c.mm+","+c.yyyy+","+c.cvv;
+    else if(fmt==="colon")core=c.number+":"+c.mm+":"+c.yyyy+":"+c.cvv;
+    else if(fmt==="csv")core=c.number+","+c.mm+","+c.yyyy+","+c.cvv;
+    else if(fmt==="spaced")core=groupNumber(c.number)+"|"+c.mm+"|"+c.yyyy+"|"+c.cvv;
+    else if(fmt==="custom"){core=repAll(repAll(repAll(repAll(tpl,"{num}",c.number),"{mm}",c.mm),"{yyyy}",c.yyyy),"{cvv}",c.cvv);}
+    else core=c.number+"|"+c.mm+"|"+c.yyyy+"|"+c.cvv;
+    return c.name?(c.name+"|"+core):core;}
+
+  var header=(fmt==="csv")?"number,exp_month,exp_year,cvv":"";
+  var lineArr=new Array(cards.length);
+  for(var li=0;li<cards.length;li++)lineArr[li]=lineOf(cards[li]);
+  var lines=(header?header+"\n":"")+lineArr.join("\n");
+
+  /* output box: preview only for huge batches so the UI stays responsive */
+  var preview;
+  if(lineArr.length>PREVIEW_LINES){
+    preview=(header?header+"\n":"")+lineArr.slice(0,PREVIEW_LINES).join("\n")+
+      "\n… showing first "+PREVIEW_LINES+" of "+fmtNum(lineArr.length)+" lines — full batch is used for Copy / Download";}
+  else preview=lines;
+
+  var binSet={};for(var q=0;q<prefixes.length;q++)binSet[prefixes[q]||"random"]=1;
+  GS.batch={cards:cards,lines:lines,prefixCount:Object.keys(binSet).length};
+  $("genOutput").textContent=preview;
+  $("genCounter").textContent=fmtNum(cards.length)+" cards generated (from "+GS.batch.prefixCount+" BIN"+(GS.batch.prefixCount>1?"s":"")+")";
+  paintPreview(cards[0]);
+
+  /* history + auto-save — skip storing very large batches so localStorage never overflows */
+  var savable=lines.length<=SAVE_CHAR_LIMIT;
+  var hist=store.get("ck_history",[]);
+  hist.unshift({ts:Date.now(),count:cards.length,lines:savable?lines:null});
+  store.set("ck_history",hist.slice(0,10));
+  if(savable)store.set("ck_last",{lines:lines,counter:$("genCounter").textContent});
+  toast(fmtNum(cards.length)+" cards generated"+(capped?" — capped at "+fmtNum(MAX_CARDS)+" total":""));}
+$("genBtn").onclick=runGenerate;
+$("genCount").addEventListener("keydown",function(e){if(e.key==="Enter")runGenerate();});
+$("genSeed").addEventListener("keydown",function(e){if(e.key==="Enter")runGenerate();});
+
+/* card preview */
+function paintPreview(card){
+  var brand=card?card.brand:(GS.brand==="random"?"random":GS.brand);
+  var meta=brandMeta(brand);
+  $("pv").style.background="linear-gradient(135deg,"+meta.grad[0]+","+meta.grad[1]+")";
+  $("pvLogo").innerHTML=(brand==="random")
+    ?'<svg width="40" height="27" viewBox="0 0 24 24" style="color:#fff"><use href="#i-shuffle" xlink:href="#i-shuffle"></use></svg>'
+    :brandLogoSVG(brand,27,true);
+  $("pvWaves").innerHTML=contactlessSVG();
+  $("pvChip").innerHTML=emvChipSVG();
+  $("pvName").textContent=meta.label;
+  $("pvCvvLbl").textContent=(brand==="amex")?"CID":"CVV";
+  if(card){var n=card.number,len=n.length;
+    var masked=n.slice(0,6)+new Array(len-8+1).join("•")+n.slice(-2);
+    $("pvNum").textContent=groupNumber(masked);
+    $("pvExp").textContent=card.mm+"/"+card.yyyy.slice(-2);
+    $("pvCvv").textContent=new Array(card.cvv.length+1).join("•");}
+  else{$("pvNum").textContent=(brand==="amex")?"•••• •••••• •••••":"•••• •••• •••• ••••";
+    $("pvExp").textContent="MM/YY";$("pvCvv").textContent="•••";}}
+
+/* generator output actions */
+function needBatch(){if(!GS.batch||!GS.batch.lines){toast("Generate a batch first",false);return false;}return true;}
+$("actCopy").onclick=function(){if(needBatch())copyToClipboard(GS.batch.lines,"Output copied");};
+$("actTxt").onclick=function(){if(needBatch())downloadFile("cards-"+todayStamp()+".txt",GS.batch.lines);};
+$("actCsv").onclick=function(){if(!needBatch())return;
+  if(!GS.batch.cards){downloadFile("cards-"+todayStamp()+".csv",GS.batch.lines,"text/csv");return;}
+  var rows=GS.batch.cards.map(function(c){return c.number+","+c.mm+","+c.yyyy+","+c.cvv;});
+  downloadFile("cards-"+todayStamp()+".csv","number,exp_month,exp_year,cvv\n"+rows.join("\n"),"text/csv");};
+$("actJson").onclick=function(){if(!needBatch())return;
+  if(!GS.batch.cards){downloadFile("cards-"+todayStamp()+".json",GS.batch.lines,"application/json");return;}
+  downloadFile("cards-"+todayStamp()+".json",JSON.stringify(GS.batch.cards,null,2),"application/json");};
+$("actQr").onclick=function(){if(!needBatch())return;
+  var max=QR.maxChars(),txt=GS.batch.lines.slice(0,max);
+  var svg=QR.svg(txt);
+  if(!svg){toast("Batch too long for QR",false);return;}
+  $("qrBox").innerHTML=svg;
+  $("qrCap").textContent="Encoding first "+txt.split("\n").length+" line(s) — "+txt.length+"/"+max+" chars";
+  openModal("qrModal");};
+$("qrClose").onclick=function(){closeModal("qrModal");};
+
+/* history modal */
+function renderHistory(){var box=$("histList"),hist=store.get("ck_history",[]);
+  box.innerHTML="";
+  if(!hist.length){box.innerHTML='<div class="empty"><svg class="ic big"><use href="#i-clock" xlink:href="#i-clock"></use></svg>No saved batches</div>';return;}
+  for(var i=0;i<hist.length;i++)(function(h){
+    var d=new Date(h.ts);
+    var item=document.createElement("div");item.className="histItem";
+    var meta=document.createElement("div");meta.className="meta";
+    meta.innerHTML="<b>"+fmtNum(h.count)+" cards</b><span>"+d.toLocaleDateString()+" "+d.toLocaleTimeString()+
+      (h.lines?"":" — too large to store")+"</span>";
+    var cp=document.createElement("button");cp.className="btn small";
+    cp.innerHTML='<svg class="ic"><use href="#i-copy" xlink:href="#i-copy"></use></svg>Copy';
+    var dl=document.createElement("button");dl.className="btn small";
+    dl.innerHTML='<svg class="ic"><use href="#i-download" xlink:href="#i-download"></use></svg>.txt';
+    if(h.lines){
+      cp.onclick=function(){copyToClipboard(h.lines,"Batch copied");};
+      dl.onclick=function(){downloadFile("cards-"+todayStamp()+".txt",h.lines);};
+    }else{cp.disabled=true;dl.disabled=true;}
+    item.appendChild(meta);item.appendChild(cp);item.appendChild(dl);box.appendChild(item);})(hist[i]);}
+$("actHistory").onclick=function(){renderHistory();openModal("histModal");};
+$("histClose").onclick=function(){closeModal("histModal");};
+$("histClear").onclick=function(){store.set("ck_history",[]);renderHistory();toast("History cleared");};
+
+/* passcode (hashed, client-side) */
+function hashPass(s){var h=5381;for(var i=0;i<s.length;i++)h=((h*33)^s.charCodeAt(i))>>>0;return "ck"+h.toString(36);}
+$("passSet").onclick=function(){var v=$("passInput").value.replace(/\D/g,"");
+  if(v.length!==4){toast("Passcode must be 4 digits",false);return;}
+  store.set("ck_pass",hashPass(v));$("passInput").value="";toast("Passcode set — auto-lock enabled");};
+$("passRemove").onclick=function(){var v=$("passInput").value.replace(/\D/g,"");
+  var cur=store.get("ck_pass",null);
+  if(!cur){toast("No passcode set",false);return;}
+  if(hashPass(v)!==cur){toast("Enter the current passcode to remove it",false);return;}
+  try{localStorage.removeItem("ck_pass");}catch(e){}
+  $("passInput").value="";locked=false;toast("Passcode removed");};
+
+/* lock overlay */
+var locked=false;
+function hasPass(){return !!store.get("ck_pass",null);}
+function lock(){if(!hasPass()||locked)return;locked=true;$("lock").classList.add("open");$("lockPin").value="";}
+$("lockPin").addEventListener("input",function(){
+  this.value=this.value.replace(/\D/g,"");
+  if(this.value.length===4){
+    if(hashPass(this.value)===store.get("ck_pass")){locked=false;$("lock").classList.remove("open");toast("Unlocked");}
+    else{var L=$("lock");L.classList.add("shake");var el=this;
+      setTimeout(function(){L.classList.remove("shake");el.value="";},380);}}});
+window.addEventListener("blur",lock);
+document.addEventListener("visibilitychange",function(){if(document.hidden)lock();});
+if(hasPass())lock();
+
+/* restore last output */
+(function(){var last=store.get("ck_last",null);
+  if(last&&last.lines){
+    var preview=last.lines;
+    var arr=last.lines.split("\n");
+    if(arr.length>PREVIEW_LINES)preview=arr.slice(0,PREVIEW_LINES).join("\n")+
+      "\n… showing first "+PREVIEW_LINES+" of "+fmtNum(arr.length)+" lines";
+    $("genOutput").textContent=preview;
+    $("genCounter").textContent=last.counter||"";
+    GS.batch={lines:last.lines,cards:null,prefixCount:0};}})();
+
+/* ================= CLEANER ================= */
+$("cleanFileBtn").onclick=function(){$("cleanFile").click();};
+$("cleanFile").onchange=function(){var f=this.files[0];if(!f)return;
+  var r=new FileReader();r.onload=function(){$("cleanInput").value=r.result;};
+  r.readAsText(f);this.value="";};
+$("cleanClear").onclick=function(){$("cleanInput").value="";CLEAN=null;
+  $("cleanStats").textContent="Paste text above, then press Clean";
+  $("cleanResults").innerHTML='<div class="empty"><svg class="ic big"><use href="#i-search" xlink:href="#i-search"></use></svg>No cards yet</div>';};
+
+$("cleanBtn").onclick=function(){
+  var text=$("cleanInput").value;
+  if(!text.trim()){toast("Paste some text first",false);return;}
+  var res=extractCards(text,{
+    ocr:$("optOcr").checked,fix:$("optFix").checked,skip:$("optSkip").checked,
+    merge:$("optMerge").checked,dedupe:$("optDedupe").checked,sort:$("optSort").value});
+  CLEAN=res;
+  var s=res.stats;
+  $("cleanStats").textContent="Found "+s.found+" cards — "+s.withExp+" with expiry, "+s.missingCvv+" missing CVV, "+
+    s.invalid+" invalid, "+s.fixed+" FIXED"+(s.dupRemoved?", removed "+s.dupRemoved+" duplicates":"");
+  renderClean();
+  toast("Cleaning complete");};
+
+var BADGE={
+  "VALID":'<span class="badge g"><svg><use href="#i-check-c" xlink:href="#i-check-c"></use></svg>VALID</span>',
+  "MISSING EXPIRY":'<span class="badge a"><svg><use href="#i-alert" xlink:href="#i-alert"></use></svg>MISSING EXPIRY</span>',
+  "INVALID":'<span class="badge r"><svg><use href="#i-x-c" xlink:href="#i-x-c"></use></svg>INVALID</span>',
+  "FIXED":'<span class="badge g"><svg><use href="#i-refresh" xlink:href="#i-refresh"></use></svg>FIXED</span>'};
+
+function cleanLine(c){var we=$("fExp").checked,wc=$("fCvv").checked;
+  var s=c.number;if(we)s+="|"+c.mm+"|"+c.yyyy;if(wc)s+="|"+c.cvv;return s;}
+function cleanOutput(){if(!CLEAN)return "";
+  return CLEAN.cards.filter(function(c){return c.status!=="INVALID";})
+    .map(cleanLine).join("\n");}
+function renderClean(){var box=$("cleanResults");
+  if(!CLEAN||!CLEAN.cards.length){box.innerHTML='<div class="empty"><svg class="ic big"><use href="#i-search" xlink:href="#i-search"></use></svg>No cards found</div>';return;}
+  box.innerHTML="";
+  for(var i=0;i<CLEAN.cards.length;i++){var c=CLEAN.cards[i];
+    var d=document.createElement("div");d.className="resLine";
+    d.innerHTML=BADGE[c.status]+'<span class="txt">'+cleanLine(c)+"</span>"+
+      '<span class="brandMini">'+brandLogoSVG(c.brand,11)+brandMeta(c.brand).label+"</span>";
+    box.appendChild(d);}}
+$("clCopy").onclick=function(){var o=cleanOutput();
+  if(o)copyToClipboard(o,"Cleaned cards copied");else toast("Nothing to copy",false);};
+$("clTxt").onclick=function(){var o=cleanOutput();
+  if(o)downloadFile("cleaned-"+todayStamp()+".txt",o);else toast("Nothing to download",false);};
+$("clJson").onclick=function(){if(!CLEAN){toast("Nothing to download",false);return;}
+  var rows=CLEAN.cards.filter(function(c){return c.status!=="INVALID";});
+  downloadFile("cleaned-"+todayStamp()+".json",JSON.stringify(rows,null,2),"application/json");};
+
+/* ================= BIN TOOLS ================= */
+$("btFileBtn").onclick=function(){$("btFile").click();};
+$("btFile").onchange=function(){var f=this.files[0];if(!f)return;
+  var r=new FileReader();r.onload=function(){$("btInput").value=r.result;};
+  r.readAsText(f);this.value="";};
+
+function rebuildCountryOptions(){var sel=$("btCountry"),cur=sel.value;
+  var set={},list=[];
+  for(var i=0;i<BT.bins.length;i++){var c=binInfo(BT.bins[i]).country;
+    if(c!=="Unknown"&&!set[c]){set[c]=1;list.push(c);}}
+  list.sort();
+  sel.innerHTML="";
+  ["All"].concat(list,["Unknown"]).forEach(function(c){
+    var o=document.createElement("option");o.textContent=c;o.value=c;sel.appendChild(o);});
+  var has=false;for(var j=0;j<sel.options.length;j++)if(sel.options[j].value===cur)has=true;
+  if(has)sel.value=cur;}
+function visibleBins(){return filterByCountry(sortBins(BT.bins,$("btSort").value),$("btCountry").value);}
+function renderBins(){var list=visibleBins(),box=$("btList");
+  $("btCount").textContent=BT.bins.length?(list.length+" of "+BT.bins.length+" unique BINs shown"):"No BINs extracted yet";
+  box.innerHTML="";
+  if(!list.length){box.innerHTML='<div class="empty"><svg class="ic big"><use href="#i-globe" xlink:href="#i-globe"></use></svg>No BINs match</div>';return;}
+  function row(b){var info=binInfo(b);
+    var d=document.createElement("div");d.className="resLine";
+    d.innerHTML='<span class="txt" style="font-size:13px">'+b+"</span>"+
+      '<span class="brandMini">'+brandLogoSVG(info.brand,11)+brandMeta(info.brand).label+"</span>"+
+      '<span class="badge b">'+info.country+"</span>";
+    return d;}
+  if($("btGroup").checked){
+    var groups={},order=[];
+    for(var i=0;i<list.length;i++){var cc=binInfo(list[i]).country;
+      if(!groups[cc]){groups[cc]=[];order.push(cc);}groups[cc].push(list[i]);}
+    order.sort();
+    for(var gi=0;gi<order.length;gi++){var country=order[gi];
+      var det=document.createElement("details");det.className="grp";det.open=true;
+      det.innerHTML="<summary>"+'<svg class="ic"><use href="#i-chev" xlink:href="#i-chev"></use></svg>'+
+        country+'<span class="count">'+groups[country].length+"</span></summary>";
+      for(var bi=0;bi<groups[country].length;bi++)det.appendChild(row(groups[country][bi]));
+      box.appendChild(det);}}
+  else{for(var k=0;k<list.length;k++)box.appendChild(row(list[k]));}}
+
+$("btExtract").onclick=function(){var text=$("btInput").value;
+  if(!text.trim()){toast("Paste cards first",false);return;}
+  var res=extractBins(text);BT.bins=res.bins;
+  rebuildCountryOptions();renderBins();
+  toast(res.bins.length+" unique BINs extracted"+(res.dupRemoved?" — removed "+res.dupRemoved+" duplicates":""));};
+$("btSort").onchange=renderBins;
+$("btCountry").onchange=renderBins;
+$("btGroup").onchange=renderBins;
+$("btCopy").onclick=function(){var b=visibleBins();
+  if(b.length)copyToClipboard(b.join("\n"),b.length+" BINs copied");else toast("Nothing to copy",false);};
+$("btTxt").onclick=function(){var b=visibleBins();
+  if(b.length)downloadFile("bins-"+todayStamp()+".txt",b.join("\n"));else toast("Nothing to download",false);};
+$("btCsv").onclick=function(){var b=visibleBins();
+  if(!b.length){toast("Nothing to download",false);return;}
+  var rows=b.map(function(x){var i=binInfo(x);
+    return x+","+brandMeta(i.brand).label+","+i.country+',"'+i.bank+'"';});
+  downloadFile("bins-"+todayStamp()+".csv","bin,brand,country,bank\n"+rows.join("\n"),"text/csv");};
+$("btSend").onclick=function(){var b=visibleBins();
+  if(!b.length){toast("Extract BINs first",false);return;}
+  GS.loadedBins=b.slice();
+  $("loadedInfo").textContent=GS.loadedBins.length+" BINs loaded from BIN Tools: "+
+    GS.loadedBins.slice(0,5).join(", ")+(GS.loadedBins.length>5?"…":"");
+  switchTab("generator");
+  document.querySelector('#genTabs button[data-gt="C"]').click();
+  toast(b.length+" BINs sent to Generator");};
+
+/* ================= VALIDATOR + BIN LOOKUP ================= */
+function validateCard(num){num=num.replace(/\D/g,"");
+  if(num.length<12){toast("Enter at least 12 digits",false);return;}
+  var brand=detectBrand(num),meta=brandMeta(brand);
+  var ok=luhnCheck(num),lenOk=(meta.len===num.length);
+  $("valResult").innerHTML=
+    '<div style="margin-bottom:10px">'+(ok
+      ?'<span class="badge g" style="font-size:12px;padding:5px 10px"><svg><use href="#i-check-c" xlink:href="#i-check-c"></use></svg>LUHN VALID</span>'
+      :'<span class="badge r" style="font-size:12px;padding:5px 10px"><svg><use href="#i-x-c" xlink:href="#i-x-c"></use></svg>LUHN INVALID</span>')+"</div>"+
+    '<div class="row" style="gap:10px;margin-bottom:8px">'+brandLogoSVG(brand,20)+"<b>"+meta.label+"</b></div>"+
+    '<div style="font-size:13px;color:var(--text2)">Length: <b style="color:var(--text)">'+num.length+"</b> (expected "+
+      (meta.len||"?")+") "+(lenOk?"":'<span class="badge a" style="margin-left:4px"><svg><use href="#i-alert" xlink:href="#i-alert"></use></svg>LENGTH</span>')+"</div>"+
+    '<div style="font-size:13px;color:var(--text2)">CVV length: <b style="color:var(--text)">'+(meta.cvv||"?")+
+      '</b> · BIN: <b class="mono" style="color:var(--text)">'+num.slice(0,6)+"</b></div>";}
+$("valInput").addEventListener("input",function(){this.value=this.value.replace(/[^\d ]/g,"");
+  if(this.value.replace(/\D/g,"").length>=12)validateCard(this.value);});
+$("valInput").addEventListener("keydown",function(e){if(e.key==="Enter")validateCard(this.value);});
+
+function lookupBin(bin){bin=bin.replace(/\D/g,"");
+  if(bin.length<4){$("binResult").innerHTML='<div class="hint warn">Enter at least 4 digits</div>';return;}
+  var info=binInfo(bin.slice(0,6)),meta=brandMeta(info.brand);
+  $("binResult").innerHTML=
+    '<div class="row" style="gap:10px;margin-bottom:8px">'+brandLogoSVG(info.brand,20)+"<b>"+meta.label+"</b>"+
+      (info.known?'<span class="badge g"><svg><use href="#i-check" xlink:href="#i-check"></use></svg>IN DB</span>'
+                 :'<span class="badge b">PREFIX MATCH</span>')+"</div>"+
+    '<div style="font-size:13px;color:var(--text2)">Country: <b style="color:var(--text)">'+info.country+"</b></div>"+
+    '<div style="font-size:13px;color:var(--text2)">Sample bank: <b style="color:var(--text)">'+info.bank+"</b></div>";}
+$("valBin").addEventListener("input",function(){this.value=this.value.replace(/\D/g,"");});
+$("valBin").addEventListener("keydown",function(e){if(e.key==="Enter")lookupBin(this.value);});
+$("valBin").addEventListener("blur",function(){if(this.value)lookupBin(this.value);});
+
+/* ================= INIT ================= */
+renderChips();
+selectBrand("visa");
+$("genYearFrom").value=new Date().getFullYear();
+$("genYearTo").value=new Date().getFullYear()+3;
+paintPreview(null);
+</script>
+</body>
+</html>
